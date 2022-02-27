@@ -7,7 +7,7 @@
 ; Hardware:	Botones y displays
 ;
 ; Creado:	20 feb, 2022
-; Última modificación: 20 feb, 2022
+; Última modificación: 26 feb, 2022
  
 
 PROCESSOR 16F887
