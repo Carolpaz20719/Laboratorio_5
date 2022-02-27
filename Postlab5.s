@@ -51,7 +51,6 @@ PSECT udata_bank0         ;reservar memoria
     valor:		DS 1	; Contiene valor a mostrar en los displays de 7-seg
     banderas:		DS 1	; Indica que display hay que encender
     num:                DS 3
-  ;  nibbles:		DS 2	; Contiene los nibbles alto y bajo de valor
     display:		DS 3	; Representación de cada nibble en el display de 7-seg
     
     
