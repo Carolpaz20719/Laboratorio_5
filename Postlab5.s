@@ -152,8 +152,11 @@ Main:
 Loop:
     MOVF    PORTA, W		; Valor del PORTA a W
     MOVWF   valor		; Movemos W a variable valor
-    CALL    OBTENER_NUM	; Guardamos nibble alto y bajo de valor
+    CALL    OBTENER_NUM  	; Guardamos nibble alto y bajo de valor
     CALL    SET_DISPLAY		; Guardamos los valores a enviar en PORTC para mostrar valor en hex
+    CLRF    num			; Limpiar num
+    CLRF    num+1		; Limpiar num+1
+    CLRF    num+2		; Limpiar num+2
     goto    Loop	        ; Loop 
     
 ;------------- SUBRUTINAS ---------------
@@ -167,8 +170,8 @@ IO_config:
     BSF     TRISB, UP	  ; Poner como entradas
     BSF     TRISB, DOWN
     CLRF    TRISC	  ; Poner como salida
-    BCF	    TRISD, 0		; RD0 como salida / display centenas
-    BCF	    TRISD, 1		; RD1 como salida / display decenas
+    BCF	    TRISD, 0	  ; RD0 como salida / display centenas
+    BCF	    TRISD, 1    	; RD1 como salida / display decenas
     BCF	    TRISD, 2		; RD2 como salida / display unidades
         
     BCF     OPTION_REG, 7
@@ -179,7 +182,7 @@ IO_config:
     CLRF    PORTA	  ; Limpiar PORTA
     CLRF    PORTC	  ; Limpiar PORTC
     CLRF    PORTD	  ; Limpiar PORTC
-    CLRF    banderas		; Limpiamos GPR
+    CLRF    banderas	  ; Limpiamos banderas
     RETURN
   
 Reloj_config:
@@ -209,7 +212,7 @@ ONC_config:
     BSF     IOCB, UP	  ; Habilitar INTERRUPT-ON-CHANGE PORTB REGISTER
     BSF     IOCB, DOWN    ; Habilitar INTERRUPT-ON-CHANGE PORTB REGISTER
     
-    BANKSEL PORTA	  ; Cmabiar de Banco
+    BANKSEL PORTA	  ; Cambiar de Banco
     MOVF    PORTB, W	  ; Al leer termina condición de mismatch
     BCF     RBIF	  ; Limpiar la bandera de puertoB
     RETURN
@@ -225,31 +228,31 @@ INT_config:
  
 OBTENER_NUM:
     CENTENAS:		
-	MOVLW  100	    ;Mover la literal de 100 a W
+	MOVLW  100	    ; Mover la literal de 100 a W
 	SUBWF  valor, W     ; valor - 100
-	BTFSS  STATUS, 0    ; 
+	BTFSS  STATUS, 0    ; verificar la resta 
         GOTO   DECENAS	    ; Vamos a decenas
-	INCF   num	    ; incrementamos el contador de centenas
 	MOVWF  valor	    ; mover valor a w al registro f
+	INCF   num	    ; incrementamos el contador de centenas
 	GOTO   CENTENAS	    ; regresar a centenas
     
     DECENAS:
-	MOVLW  10           ;Mover la literal de 10 a W
+	MOVLW  10           ; Mover la literal de 10 a W
 	SUBWF  valor, W     ; valor - 10
-	BTFSS  STATUS, 0    ; 
+	BTFSS  STATUS, 0    ; Verificar la resta
         GOTO   UNIDADES	    ; Vamos a unidades
-	INCF   num +1 	    ; incrementamos el contador de centenas
 	MOVWF  valor	    ; mover valor a w al registro f
+	INCF   num +1 	    ; incrementamos el contador de centenas
 	GOTO   DECENAS	    ; regresar a decenas
     
     UNIDADES:
 	MOVLW  1            ; Mover la literal de 1 a W
 	SUBWF  valor, W     ; valor - 1
-	BTFSS  STATUS, 0    ; 
+	BTFSS  STATUS, 0    ; Verificar la resta
         RETURN
-	INCF   num+2	    ; incrementamos el contador de centenas
 	MOVWF  valor	    ; mover valor a w al registro f
-	GOTO   UNIDADES    ; regresar a unidades 
+	INCF   num+2	    ; incrementamos el contador de centenas
+	GOTO   UNIDADES     ; regresar a unidades 
 
     
 SET_DISPLAY:
@@ -257,11 +260,11 @@ SET_DISPLAY:
     CALL    Tabla		; Buscamos valor a cargar en PORTC
     MOVWF   display		; Guardamos en display
     
-    MOVF    num+1, W	; Movemos nibble alto a W
+    MOVF    num+1, W	        ; Movemos nibble alto a W
     CALL    Tabla		; Buscamos valor a cargar en PORTC
     MOVWF   display+1		; Guardamos en display+1
        
-    MOVF    num+2, W	; Movemos nibble alto a W
+    MOVF    num+2, W	        ; Movemos nibble alto a W
     CALL    Tabla		; Buscamos valor a cargar en PORTC
     MOVWF   display+2		; Guardamos en display+1
     RETURN
@@ -270,32 +273,33 @@ MOSTRAR_VALOR:
     BCF	    PORTD, 0		; Apagamos display 
     BCF	    PORTD, 1		; Apagamos display 
     BCF	    PORTD, 2		; Apagamos display 
+    
     BTFSC   banderas, 1		; Verificamos bandera
-    GOTO    DISPLAY_2		;  
+    GOTO    DISPLAY_2		; Ir al display2
     BTFSC   banderas, 0		; Verificamos bandera
-    GOTO    DISPLAY_1		;  
+    GOTO    DISPLAY_1		; Ir al dispaly1
       
     DISPLAY_0:			
 	MOVF    display, W	; Movemos display a W
 	MOVWF   PORTC		; Movemos Valor de tabla a PORTC
-	BSF	PORTD, 1	; Encendemos display de nibble bajo
-	BCF	banderas, 1	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
-        BSF     banderas, 0
+	BSF	PORTD, 0	; Encendemos display de nibble bajo
+	BCF	banderas, 1	; Poner banderas en 1
+        BSF     banderas, 0	; Poner banderas en 0
     RETURN
 
     DISPLAY_1:
 	MOVF    display+1, W	; Movemos display+1 a W
 	MOVWF   PORTC		; Movemos Valor de tabla a PORTC
-	BSF	PORTD, 2	; Encendemos display de nibble alto
-	BSF	banderas, 1	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
+	BSF	PORTD, 1	; Encendemos display de nibble alto
+	BSF	banderas, 1	; Poner banderas en 0
     RETURN
     
     DISPLAY_2:
-	MOVF    display+2, W	; Movemos display+1 a W
+	MOVF    display+2, W	; Movemos display+2 a W
 	MOVWF   PORTC		; Movemos Valor de tabla a PORTC
-	BSF	PORTD, 0	; Encendemos display de nibble alto
-	BCF	banderas, 0
-	BCF	banderas, 0	; Cambiamos bandera para cambiar el otro display en la siguiente interrupción
+	BSF	PORTD, 2	; Encendemos display de nibble alto
+	BCF	banderas, 1	; Poner banderas en 1
+	BCF	banderas, 0	; Poner banderas en 1
     RETURN
 
     
